@@ -11,7 +11,7 @@ import remarkGfm from "remark-gfm";
 export function ChatBubble() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const { messages, append, isLoading } = useChat({
+  const { messages, sendMessage, status } = useChat({
     api: "/api/chat",
     initialMessages: [
       {
@@ -31,6 +31,8 @@ export function ChatBubble() {
     }
   }, [messages]);
 
+  const isLoading = status === "submitted" || status === "streaming";
+
   const onFormSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!inputValue || !inputValue.trim() || isLoading) return;
@@ -39,7 +41,7 @@ export function ChatBubble() {
     const textarea = document.getElementById("chat-textarea");
     if (textarea) textarea.style.height = 'auto';
 
-    append({ role: "user", content: inputValue });
+    sendMessage({ role: "user", content: inputValue });
     setInputValue("");
   };
 
