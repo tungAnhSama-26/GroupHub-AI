@@ -10,7 +10,7 @@ import remarkGfm from "remark-gfm";
 
 export function ChatBubble() {
   const [isOpen, setIsOpen] = useState(false);
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+  const { messages, input, setInput, handleSubmit, isLoading } = useChat({
     api: "/api/chat",
     initialMessages: [
       {
@@ -111,7 +111,7 @@ export function ChatBubble() {
                   id="chat-textarea"
                   value={input || ""}
                   onChange={(e) => {
-                    handleInputChange(e);
+                    setInput(e.target.value);
                     e.target.style.height = 'auto';
                     e.target.style.height = `${e.target.scrollHeight}px`;
                   }}
