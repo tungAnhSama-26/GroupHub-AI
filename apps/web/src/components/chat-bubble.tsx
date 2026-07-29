@@ -10,7 +10,8 @@ import remarkGfm from "remark-gfm";
 
 export function ChatBubble() {
   const [isOpen, setIsOpen] = useState(false);
-  const { messages, input, setInput, handleSubmit, isLoading } = useChat({
+  const [inputValue, setInputValue] = useState("");
+  const { messages, append, isLoading } = useChat({
     api: "/api/chat",
     initialMessages: [
       {
@@ -32,13 +33,14 @@ export function ChatBubble() {
 
   const onFormSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!input || !input.trim() || isLoading) return;
+    if (!inputValue || !inputValue.trim() || isLoading) return;
     
     // reset textarea height
     const textarea = document.getElementById("chat-textarea");
     if (textarea) textarea.style.height = 'auto';
 
-    handleSubmit(e);
+    append({ role: "user", content: inputValue });
+    setInputValue("");
   };
 
   return (
@@ -109,9 +111,9 @@ export function ChatBubble() {
               <form onSubmit={onFormSubmit} className="flex gap-2 items-end">
                 <textarea
                   id="chat-textarea"
-                  value={input || ""}
+                  value={inputValue}
                   onChange={(e) => {
-                    setInput(e.target.value);
+                    setInputValue(e.target.value);
                     e.target.style.height = 'auto';
                     e.target.style.height = `${e.target.scrollHeight}px`;
                   }}
@@ -128,7 +130,7 @@ export function ChatBubble() {
                 <Button 
                   type="submit" 
                   size="icon" 
-                  disabled={isLoading || !input || !input.trim()}
+                  disabled={isLoading || !inputValue || !inputValue.trim()}
                   className="rounded-full h-11 w-11 shrink-0 bg-blue-600 hover:bg-blue-700"
                 >
                   <Send size={18} />
