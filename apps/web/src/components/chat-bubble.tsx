@@ -32,7 +32,7 @@ export function ChatBubble() {
 
   const onFormSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input || !input.trim() || isLoading) return;
     
     // reset textarea height
     const textarea = document.getElementById("chat-textarea");
@@ -109,7 +109,7 @@ export function ChatBubble() {
               <form onSubmit={onFormSubmit} className="flex gap-2 items-end">
                 <textarea
                   id="chat-textarea"
-                  value={input}
+                  value={input || ""}
                   onChange={(e) => {
                     handleInputChange(e);
                     e.target.style.height = 'auto';
@@ -128,7 +128,7 @@ export function ChatBubble() {
                 <Button 
                   type="submit" 
                   size="icon" 
-                  disabled={isLoading || !input.trim()}
+                  disabled={isLoading || !input || !input.trim()}
                   className="rounded-full h-11 w-11 shrink-0 bg-blue-600 hover:bg-blue-700"
                 >
                   <Send size={18} />
