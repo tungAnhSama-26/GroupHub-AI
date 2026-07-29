@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
             category: z.string().optional().describe("Lĩnh vực chuyên môn"),
           }),
           execute: async ({ keyword, platform, category }) => {
-            const where: any = { isApproved: true };
+            const where: Record<string, unknown> = { isApproved: true };
             if (keyword) {
               where.OR = [
                 { name: { contains: keyword, mode: "insensitive" } },
