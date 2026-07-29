@@ -1,31 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X, Send } from "lucide-react";
 import { Button } from "./ui/button";
+import { useChat } from "@ai-sdk/react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export function ChatBubble() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<{role: 'user'|'assistant', content: string}[]>([
-    { role: 'assistant', content: 'Xin chào! Tôi là trợ lý AI của GroupHub. Tôi có thể giúp gì cho bạn?' }
-  ]);
-  const [inputValue, setInputValue] = useState("");
+  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+    api: "/api/chat",
+    initialMessages: [
+      {
+        id: "welcome-msg",
+        role: "assistant",
+        content: "Xin chào! Tôi là trợ lý AI của GroupHub. Bạn muốn tìm cộng đồng về lĩnh vực gì?",
+      }
+    ]
+  });
 
-  const handleSend = (e?: React.FormEvent) => {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Auto-scroll to bottom
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
+  const onFormSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!inputValue.trim()) return;
-
-    // Add user message
-    setMessages(prev => [...prev, { role: 'user', content: inputValue }]);
-    setInputValue("");
-    const textarea = document.getElementById('chat-textarea');
+    if (!input.trim() || isLoading) return;
+    
+    // reset textarea height
+    const textarea = document.getElementById("chat-textarea");
     if (textarea) textarea.style.height = 'auto';
 
-    // Simulate AI response for now
-    setTimeout(() => {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Tính năng chat AI đang được phát triển. Vui lòng quay lại sau nhé!' }]);
-    }, 1000);
+    handleSubmit(e);
   };
 
   return (
@@ -65,34 +78,47 @@ export function ChatBubble() {
 
             {/* Messages */}
             <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-zinc-50 dark:bg-zinc-900/50">
-              {messages.map((msg, idx) => (
-                <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[80%] p-3 rounded-2xl break-words whitespace-pre-wrap ${
+              {messages.map((msg) => (
+                <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[85%] p-3 rounded-2xl break-words whitespace-pre-wrap text-sm ${
                     msg.role === 'user' 
                       ? 'bg-blue-600 text-white rounded-tr-sm' 
                       : 'bg-white dark:bg-zinc-800 border text-zinc-800 dark:text-zinc-200 rounded-tl-sm shadow-sm'
                   }`}>
-                    <p className="text-sm">{msg.content}</p>
+                    {msg.role === "user" ? (
+                      msg.content
+                    ) : (
+                      <div className="prose prose-sm dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 max-w-none">
+                        {msg.content.length > 0 ? (
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {msg.content}
+                          </ReactMarkdown>
+                        ) : (
+                          <span className="italic text-zinc-400">Đang tìm kiếm...</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Input */}
             <div className="p-4 bg-white dark:bg-zinc-950 border-t">
-              <form onSubmit={handleSend} className="flex gap-2 items-end">
+              <form onSubmit={onFormSubmit} className="flex gap-2 items-end">
                 <textarea
                   id="chat-textarea"
-                  value={inputValue}
+                  value={input}
                   onChange={(e) => {
-                    setInputValue(e.target.value);
+                    handleInputChange(e);
                     e.target.style.height = 'auto';
                     e.target.style.height = `${e.target.scrollHeight}px`;
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
-                      handleSend();
+                      onFormSubmit();
                     }
                   }}
                   placeholder="Nhập tin nhắn..."
@@ -102,6 +128,7 @@ export function ChatBubble() {
                 <Button 
                   type="submit" 
                   size="icon" 
+                  disabled={isLoading || !input.trim()}
                   className="rounded-full h-11 w-11 shrink-0 bg-blue-600 hover:bg-blue-700"
                 >
                   <Send size={18} />
