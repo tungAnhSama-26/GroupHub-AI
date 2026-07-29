@@ -1,78 +1,160 @@
 "use client";
 
 import { useStore } from "@/lib/store";
-import { motion } from "framer-motion";
-import { Search, Sparkles, TrendingUp, Users, ShieldCheck, Zap } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
+import { useEffect } from "react";
+import { Search, Sparkles, TrendingUp, Users, ShieldCheck, Zap, LayoutDashboard, LogOut, Home, Info, Compass, PlusCircle } from "lucide-react";
+import { getVerifiedCommunities, getFilterCategories } from "./actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import Swal from "sweetalert2";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import { useQuery } from "@tanstack/react-query";
 
-interface Community {
-  id: string;
-  name: string;
-  description: string;
-  platform: string;
-  members: string;
-  tags: string[];
-  avatar: string;
-  memberCount: number;
-}
+// Using Community from database
+import { Community } from "@grouphub/database";
 
 export default function Home() {
-  const { searchQuery, setSearchQuery } = useStore();
+  const { searchQuery, setSearchQuery, selectedCategory, setSelectedCategory } = useStore();
+  const { data: session, isPending } = authClient.useSession();
+  const router = useRouter();
+
+  // Force onboarding for OAuth users who haven't completed their profile
+  useEffect(() => {
+    if (!isPending && session?.user) {
+      const user = session.user as { isOnboarded?: boolean, isApproved?: boolean, role?: string };
+      if (!user.isOnboarded) {
+        router.push("/onboarding");
+      }
+    }
+  }, [session, isPending, router]);
+
+  const handlePostCommunity = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!session?.user) {
+      router.push("/login");
+      return;
+    }
+    const user = session.user as any;
+    if (!user.isApproved) {
+      Swal.fire({
+        title: 'Tài khoản chưa được duyệt',
+        text: 'Bạn cần chờ Admin phê duyệt tài khoản để có thể đăng cộng đồng.',
+        icon: 'warning',
+        confirmButtonText: 'Đã hiểu'
+      });
+      return;
+    }
+    router.push("/submit-community");
+  };
   
   const { data: communities = [], isLoading } = useQuery<Community[]>({
-    queryKey: ['communities', searchQuery],
+    queryKey: ['communities', searchQuery, selectedCategory],
     queryFn: async () => {
-      try {
-        const url = new URL('http://localhost:3001/community');
-        if (searchQuery) url.searchParams.set('q', searchQuery);
-        
-        const res = await fetch(url.toString());
-        if (!res.ok) throw new Error('Network response was not ok');
-        return res.json();
-      } catch (e) {
-        // Fallback for development if NestJS is not running / no DB
-        return [
-          {
-            id: "1",
-            name: "AI Innovators",
-            description: "The largest community of AI researchers and builders.",
-            platform: "Discord",
-            memberCount: 125000,
-            tags: ["AI", "Machine Learning"],
-            avatar: "https://github.com/shadcn.png",
-            members: "125k"
-          }
-        ];
-      }
+      const res = await getVerifiedCommunities(searchQuery, selectedCategory || "");
+      return res.success ? (res.data as Community[]) : [];
+    }
+  });
+
+  const { data: filterCategories = [] } = useQuery<string[]>({
+    queryKey: ['filterCategories'],
+    queryFn: async () => {
+      const res = await getFilterCategories();
+      return res.success ? res.data : [];
     }
   });
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-50 overflow-hidden font-sans selection:bg-purple-500/30">
+    <div className="min-h-screen bg-neutral-50 text-neutral-900 overflow-hidden font-sans selection:bg-blue-500/30">
       
-      {/* Navbar Placeholder */}
-      <header className="fixed top-0 w-full border-b border-white/10 bg-black/50 backdrop-blur-md z-50">
+      {/* Navbar */}
+      <header className="fixed top-0 w-full border-b border-neutral-200 bg-white/80 backdrop-blur-md z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-blue-500 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center shadow-sm">
               <Zap className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-xl tracking-tight">GroupHub <span className="text-purple-400">AI</span></span>
+            <span className="font-bold text-xl tracking-tight text-neutral-900">GroupHub <span className="text-blue-600">AI</span></span>
           </div>
-          <nav className="hidden md:flex gap-6 text-sm font-medium text-neutral-400">
-            <a href="#" className="hover:text-white transition-colors">Discover</a>
-            <a href="#" className="hover:text-white transition-colors">Analytics</a>
-            <a href="#" className="hover:text-white transition-colors">Submit Community</a>
+          <nav className="hidden md:flex gap-8 text-sm font-medium text-neutral-500">
+            <Link href="/" className="flex items-center gap-1.5 hover:text-blue-600 transition-colors">
+              <Home className="w-4 h-4" /> Trang chủ
+            </Link>
+            <Link href="/about" className="flex items-center gap-1.5 hover:text-blue-600 transition-colors">
+              <Info className="w-4 h-4" /> Về chúng tôi
+            </Link>
+            <Link href="/categories" className="flex items-center gap-1.5 hover:text-blue-600 transition-colors">
+              <Compass className="w-4 h-4" /> Khám phá
+            </Link>
+            <a href="#" className="flex items-center gap-1.5 hover:text-blue-600 transition-colors">
+              <TrendingUp className="w-4 h-4" /> Phân tích
+            </a>
+            <a href="#" onClick={handlePostCommunity} className="flex items-center gap-1.5 hover:text-blue-600 transition-colors cursor-pointer">
+              <PlusCircle className="w-4 h-4" /> Đăng cộng đồng
+            </a>
           </nav>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" className="text-neutral-300 hover:text-white">Sign In</Button>
-            <Button className="bg-white text-black hover:bg-neutral-200 rounded-full px-6">Get Started</Button>
+            {session ? (
+              <div className="flex items-center gap-3">
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="outline-none">
+                    <Avatar className="w-9 h-9 border border-neutral-200 cursor-pointer shadow-sm hover:ring-2 hover:ring-blue-100 transition-all">
+                      <AvatarImage src={session.user.image || ""} />
+                      <AvatarFallback className="bg-blue-100 text-blue-700 font-medium">
+                        {session.user.name?.charAt(0)?.toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-72">
+                    <DropdownMenuGroup>
+                      <DropdownMenuLabel className="font-normal">
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-medium leading-none">{session.user.name}</p>
+                          <p className="text-xs leading-none text-muted-foreground">{session.user.email}</p>
+                        </div>
+                      </DropdownMenuLabel>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    {/* @ts-expect-error Type mismatch with Prisma payload */}
+                    {(session.user.role === "ADMIN" || session.user.email === "tunganht26@gmail.com") && (
+                      <DropdownMenuItem onClick={() => router.push('/admin')} className="cursor-pointer font-medium text-blue-600 flex items-center">
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        Chuyển sang giao diện quản lý
+                      </DropdownMenuItem>
+                    )}
+                    {/* @ts-expect-error Type mismatch with Prisma payload */}
+                    {(session.user.role === "ADMIN" || session.user.email === "tunganht26@gmail.com") && <DropdownMenuSeparator />}
+                    <DropdownMenuItem onClick={() => authClient.signOut()} className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 flex items-center">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Đăng xuất
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost" className="text-neutral-600 hover:text-blue-600 hover:bg-blue-50">Đăng nhập</Button>
+                </Link>
+                <Link href="/register">
+                  <Button className="bg-blue-600 text-white hover:bg-blue-700 rounded-full px-6 shadow-sm">Bắt đầu ngay</Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -80,120 +162,129 @@ export default function Home() {
       {/* Hero Section */}
       <main className="pt-32 pb-20 relative">
         {/* Background Gradients */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-300/30 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-cyan-300/30 rounded-full blur-[120px] pointer-events-none" />
 
         <div className="container mx-auto px-4 relative z-10">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center max-w-4xl mx-auto space-y-8"
+          <div 
+            className="text-center max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700"
           >
-            <Badge variant="outline" className="border-purple-500/30 text-purple-300 bg-purple-500/10 rounded-full px-4 py-1">
-              <Sparkles className="w-3 h-3 mr-2 inline" /> AI-Powered Community Directory
+            <Badge variant="outline" className="border-blue-200 text-blue-700 bg-blue-50 rounded-full px-4 py-1">
+              <Sparkles className="w-3 h-3 mr-2 inline" /> Danh bạ cộng đồng AI thông minh
             </Badge>
             
-            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight">
-              Discover Your Next <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400">
-                Online Community
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-neutral-900">
+              Khám Phá <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
+                Cộng Đồng Trực Tuyến
               </span>
             </h1>
             
-            <p className="text-lg md:text-xl text-neutral-400 max-w-2xl mx-auto leading-relaxed">
-              Find high-quality, active, and verified communities across Discord, Telegram, and more in seconds. No more spam, just real connections.
+            <p className="text-lg md:text-xl text-neutral-600 max-w-2xl mx-auto leading-relaxed">
+              Tìm kiếm các cộng đồng chất lượng, sôi động và đã được xác thực trên Discord, Telegram,... chỉ trong vài giây. Tạm biệt tin rác, kết nối giá trị thật.
             </p>
 
             <div className="max-w-2xl mx-auto relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl blur-lg opacity-25 group-hover:opacity-40 transition-opacity duration-500" />
-              <div className="relative bg-neutral-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-2 flex items-center shadow-2xl">
-                <Search className="w-6 h-6 text-neutral-500 ml-4" />
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-2xl blur-lg opacity-20 group-hover:opacity-30 transition-opacity duration-500" />
+              <div className="relative bg-white border border-neutral-200 rounded-2xl p-2 flex items-center shadow-lg">
+                <Search className="w-6 h-6 text-neutral-400 ml-4" />
                 <Input 
                   type="text" 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search 'machine learning discord' or 'marketing telegram'..." 
-                  className="border-0 bg-transparent text-lg focus-visible:ring-0 focus-visible:ring-offset-0 px-4 h-14"
+                  placeholder="Tìm 'machine learning discord' hoặc 'marketing telegram'..." 
+                  className="border-0 bg-transparent text-lg text-neutral-900 focus-visible:ring-0 focus-visible:ring-offset-0 px-4 h-14 placeholder:text-neutral-400"
                 />
-                <Button size="lg" className="h-14 px-8 rounded-xl bg-white text-black hover:bg-neutral-200 font-semibold transition-all">
-                  Search
+                <Button size="lg" className="h-14 px-8 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-md font-semibold transition-all">
+                  Tìm kiếm
                 </Button>
               </div>
             </div>
 
             <div className="flex flex-wrap justify-center gap-3 pt-6">
-              {['🔥 Trending', '💻 Tech', '🎨 Design', '🚀 Web3', '📈 Marketing', '🎮 Gaming'].map((tag) => (
-                <button key={tag} className="px-4 py-2 rounded-full border border-white/5 bg-white/5 hover:bg-white/10 transition-colors text-sm font-medium text-neutral-300">
+              <button 
+                onClick={() => setSelectedCategory(null)}
+                className={`px-4 py-2 rounded-full border transition-colors text-sm font-medium shadow-sm ${!selectedCategory ? 'bg-blue-600 text-white border-blue-600' : 'border-neutral-200 bg-white hover:bg-neutral-50 hover:border-blue-200 text-neutral-600'}`}
+              >
+                🔥 Tất cả
+              </button>
+              {filterCategories.map((tag) => (
+                <button 
+                  key={tag} 
+                  onClick={() => setSelectedCategory(tag)}
+                  className={`px-4 py-2 rounded-full border transition-colors text-sm font-medium shadow-sm ${selectedCategory === tag ? 'bg-blue-600 text-white border-blue-600' : 'border-neutral-200 bg-white hover:bg-neutral-50 hover:border-blue-200 text-neutral-600'}`}
+                >
                   {tag}
                 </button>
               ))}
             </div>
-          </motion.div>
+            </div>
         </div>
       </main>
 
       {/* Featured Section */}
-      <section className="py-24 bg-neutral-950 relative border-t border-white/5">
+      <section className="py-24 bg-white relative border-t border-neutral-200">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-end mb-12">
             <div>
-              <h2 className="text-3xl font-bold mb-3 flex items-center gap-3">
-                <TrendingUp className="text-purple-400" /> Trending Communities
+              <h2 className="text-3xl font-bold mb-3 flex items-center gap-3 text-neutral-900">
+                <TrendingUp className="text-blue-600" /> Cộng đồng nổi bật
               </h2>
-              <p className="text-neutral-400">The most active groups this week, curated by our AI.</p>
+              <p className="text-neutral-500">Các nhóm hoạt động tích cực nhất tuần này, được AI chọn lọc.</p>
             </div>
-            <Button variant="outline" className="hidden md:flex border-white/10 hover:bg-white/5">
-              View All
+            <Button variant="outline" className="hidden md:flex border-neutral-200 text-neutral-700 hover:bg-neutral-50 hover:text-blue-600">
+              Xem tất cả
             </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {isLoading ? (
-              <div className="col-span-3 text-center text-neutral-500 py-12">Loading communities...</div>
+              <div className="col-span-3 text-center text-neutral-500 py-12">Đang tải danh sách...</div>
             ) : communities.map((community, i) => (
-              <motion.div
-                key={community.id || community.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
+              <Link
+                key={community.id}
+                href={`/community/${community.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both block"
+                style={{ animationDelay: `${i * 100}ms` }}
               >
-                <Card className="bg-neutral-900/40 border-white/10 hover:border-purple-500/50 transition-colors overflow-hidden group">
+                <Card className="bg-white border-neutral-200 hover:border-blue-300 transition-all shadow-sm hover:shadow-md overflow-hidden group h-full cursor-pointer">
                   <CardHeader className="pb-4">
                     <div className="flex justify-between items-start">
-                      <Avatar className="w-12 h-12 border border-white/10">
-                        <AvatarImage src={community.avatar} />
-                        <AvatarFallback>GH</AvatarFallback>
+                      <Avatar className="w-12 h-12 border border-neutral-100 shadow-sm">
+                        <AvatarImage src={community.logoUrl || ""} />
+                        <AvatarFallback className="bg-blue-50 text-blue-700">{community.name.charAt(0)}</AvatarFallback>
                       </Avatar>
-                      <Badge variant="secondary" className="bg-neutral-800 text-neutral-300 group-hover:bg-purple-500/20 group-hover:text-purple-300 transition-colors">
+                      <Badge variant="secondary" className="bg-neutral-100 text-neutral-600 group-hover:bg-blue-50 group-hover:text-blue-700 transition-colors capitalize">
                         {community.platform}
                       </Badge>
                     </div>
-                    <CardTitle className="text-xl mt-4 text-white group-hover:text-purple-400 transition-colors">
+                    <CardTitle className="text-xl mt-4 text-neutral-900 group-hover:text-blue-600 transition-colors line-clamp-1">
                       {community.name}
                     </CardTitle>
-                    <CardDescription className="text-neutral-400 mt-2">
-                      {community.description}
+                    <CardDescription className="text-neutral-500 mt-2 line-clamp-2">
+                      {community.description || "Chưa có mô tả"}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="flex gap-2">
-                      {community.tags.map(tag => (
-                        <span key={tag} className="text-xs font-medium text-neutral-500 bg-neutral-950 px-2 py-1 rounded-md">
+                      {community.tags?.map((tag) => (
+                        <span key={tag} className="text-xs font-medium text-blue-700 bg-blue-50 px-2 py-1 rounded-md border border-blue-100">
                           {tag}
                         </span>
                       ))}
                     </div>
                   </CardContent>
-                  <CardFooter className="pt-4 border-t border-white/5 flex justify-between items-center bg-neutral-950/30">
-                    <div className="flex items-center text-sm text-neutral-400">
-                      <Users className="w-4 h-4 mr-2 text-blue-400" />
-                      {community.memberCount ? `${(community.memberCount / 1000).toFixed(1)}k` : community.members} members
+                  <CardFooter className="pt-4 border-t border-neutral-100 flex justify-between items-center bg-neutral-50/50">
+                    <div className="flex items-center text-sm text-neutral-600 font-medium">
+                      <Users className="w-4 h-4 mr-2 text-blue-500" />
+                      {community.memberCount >= 1000 ? `${(community.memberCount / 1000).toFixed(1)}k` : community.memberCount} thành viên
                     </div>
-                    <ShieldCheck className="w-5 h-5 text-green-400 opacity-80" />
+                    <ShieldCheck className="w-5 h-5 text-emerald-500" />
                   </CardFooter>
                 </Card>
-              </motion.div>
+              </Link>
             ))}
           </div>
         </div>
