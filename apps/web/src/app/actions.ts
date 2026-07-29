@@ -4,6 +4,8 @@ import { prisma, Community } from "@grouphub/database";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
+import fs from "fs/promises";
+import path from "path";
 
 function slugify(text: string) {
   return text
@@ -143,5 +145,38 @@ export async function getFilterCategories() {
   } catch (error) {
     console.error("Lỗi khi lấy bộ lọc:", error);
     return { success: false, data: [] };
+  }
+}
+
+/**
+ * Upload hình ảnh từ client lên server (lưu cục bộ vào public/uploads)
+ */
+export async function uploadImage(formData: FormData) {
+  try {
+    const file = formData.get("file") as File;
+    if (!file) {
+      return { success: false, url: "" };
+    }
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const filename = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+    
+    // Save to public/uploads
+    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    
+    // Ensure dir exists
+    try {
+      await fs.access(uploadDir);
+    } catch {
+      await fs.mkdir(uploadDir, { recursive: true });
+    }
+
+    const filePath = path.join(uploadDir, filename);
+    await fs.writeFile(filePath, buffer);
+
+    return { success: true, url: `/uploads/${filename}` };
+  } catch (error) {
+    console.error("Lỗi khi upload ảnh:", error);
+    return { success: false, url: "" };
   }
 }

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { submitCommunity } from "../actions";
+import { submitCommunity, uploadImage } from "../actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +19,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 export default function SubmitCommunityClient({ categories }: { categories: string[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [logoFile, setLogoFile] = useState<File | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -33,15 +34,30 @@ export default function SubmitCommunityClient({ categories }: { categories: stri
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.url || !formData.platform || !formData.domain || !formData.memberCount) {
-      Swal.fire("Lỗi", "Vui lòng điền đầy đủ các thông tin bắt buộc.", "warning");
+    if (!formData.name || !formData.url || !formData.platform || !formData.domain || !formData.memberCount || !formData.description || !logoFile) {
+      Swal.fire("Lỗi", "Vui lòng điền đầy đủ các thông tin bắt buộc và tải lên ảnh Logo.", "warning");
       return;
     }
 
     startTransition(async () => {
+      // Upload image first
+      let uploadedLogoUrl = "";
+      if (logoFile) {
+        const uploadData = new FormData();
+        uploadData.append("file", logoFile);
+        const uploadRes = await uploadImage(uploadData);
+        if (uploadRes.success) {
+          uploadedLogoUrl = uploadRes.url;
+        } else {
+          Swal.fire("Lỗi", "Không thể tải lên ảnh Logo, vui lòng thử lại.", "error");
+          return;
+        }
+      }
+
       const payload = {
         ...formData,
-        memberCount: parseInt(formData.memberCount) || 0,
+        logoUrl: uploadedLogoUrl,
+        memberCount: parseInt(formData.memberCount.replace(/[^0-9]/g, '')) || 0,
       };
 
       const res = await submitCommunity(payload);
@@ -118,11 +134,17 @@ export default function SubmitCommunityClient({ categories }: { categories: stri
         <div className="space-y-2">
           <label className="text-sm font-medium text-neutral-700">Số lượng thành viên ước tính <span className="text-red-500">*</span></label>
           <Input 
-            type="number"
-            min="0"
-            placeholder="VD: 15000" 
+            type="text"
+            placeholder="VD: 15.000" 
             value={formData.memberCount}
-            onChange={(e) => setFormData({ ...formData, memberCount: e.target.value })}
+            onChange={(e) => {
+              const rawValue = e.target.value.replace(/[^0-9]/g, '');
+              if (rawValue) {
+                setFormData({ ...formData, memberCount: parseInt(rawValue).toLocaleString('vi-VN') });
+              } else {
+                setFormData({ ...formData, memberCount: "" });
+              }
+            }}
             required
             className="h-11"
           />
@@ -142,23 +164,28 @@ export default function SubmitCommunityClient({ categories }: { categories: stri
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-neutral-700">Đường dẫn ảnh Logo (URL) <span className="text-neutral-400 font-normal">(Tùy chọn)</span></label>
+        <label className="text-sm font-medium text-neutral-700">Ảnh Logo cộng đồng <span className="text-red-500">*</span></label>
         <Input 
-          type="url"
-          placeholder="https://example.com/logo.png" 
-          value={formData.logoUrl}
-          onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
-          className="h-11"
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            if (e.target.files && e.target.files[0]) {
+              setLogoFile(e.target.files[0]);
+            }
+          }}
+          required
+          className="h-11 cursor-pointer"
         />
-        <p className="text-xs text-neutral-500 italic">Vui lòng cung cấp địa chỉ (link) ảnh logo của bạn.</p>
+        <p className="text-xs text-neutral-500 italic">Vui lòng tải lên ảnh logo (kích thước tối đa 5MB).</p>
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-neutral-700">Mô tả ngắn <span className="text-neutral-400 font-normal">(Tùy chọn)</span></label>
+        <label className="text-sm font-medium text-neutral-700">Mô tả ngắn <span className="text-red-500">*</span></label>
         <Textarea 
           placeholder="Giới thiệu đôi nét về cộng đồng của bạn..." 
           value={formData.description}
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
+          required
           className="resize-none min-h-[100px]"
         />
       </div>
