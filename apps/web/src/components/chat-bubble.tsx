@@ -12,13 +12,15 @@ export function ChatBubble() {
   ]);
   const [inputValue, setInputValue] = useState("");
 
-  const handleSend = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSend = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!inputValue.trim()) return;
 
     // Add user message
     setMessages(prev => [...prev, { role: 'user', content: inputValue }]);
     setInputValue("");
+    const textarea = document.getElementById('chat-textarea');
+    if (textarea) textarea.style.height = 'auto';
 
     // Simulate AI response for now
     setTimeout(() => {
@@ -78,18 +80,29 @@ export function ChatBubble() {
 
             {/* Input */}
             <div className="p-4 bg-white dark:bg-zinc-950 border-t">
-              <form onSubmit={handleSend} className="flex gap-2">
-                <input
-                  type="text"
+              <form onSubmit={handleSend} className="flex gap-2 items-end">
+                <textarea
+                  id="chat-textarea"
                   value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
+                  onChange={(e) => {
+                    setInputValue(e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${e.target.scrollHeight}px`;
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
                   placeholder="Nhập tin nhắn..."
-                  className="flex-1 px-4 py-2 bg-zinc-100 dark:bg-zinc-900 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="flex-1 px-4 py-3 bg-zinc-100 dark:bg-zinc-900 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 resize-none min-h-[44px] max-h-[120px] overflow-y-auto"
+                  rows={1}
                 />
                 <Button 
                   type="submit" 
                   size="icon" 
-                  className="rounded-full h-10 w-10 shrink-0 bg-blue-600 hover:bg-blue-700"
+                  className="rounded-full h-11 w-11 shrink-0 bg-blue-600 hover:bg-blue-700"
                 >
                   <Send size={18} />
                 </Button>
