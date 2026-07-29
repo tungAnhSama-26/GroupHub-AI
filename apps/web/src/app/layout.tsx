@@ -7,6 +7,7 @@ import { Toaster } from "sonner";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 import Providers from "@/components/providers";
+import { ChatBubble } from "@/components/chat-bubble";
 
 export const metadata: Metadata = {
   title: "GroupHub AI - Discover Your Next Community",
@@ -29,6 +30,7 @@ export default function RootLayout({
         >
           <Providers>
             {children}
+            <ChatBubble />
           </Providers>
           <Toaster richColors position="top-right" />
         </ThemeProvider>

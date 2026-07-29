@@ -14,8 +14,7 @@ export default async function AdminDashboardPage() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
       <AdminHeader 
-        title="Tổng quan hệ thống" 
-        description="Chào mừng bạn quay lại trang quản trị GroupHub AI." 
+        title="Tổng quan" 
       />
       
       <div className="p-8 space-y-8">
