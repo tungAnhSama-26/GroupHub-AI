@@ -28,7 +28,7 @@ import { useQuery } from "@tanstack/react-query";
 // Using Community from database
 import { Community } from "@grouphub/database";
 
-export default function Home() {
+export default function HomePage() {
   const { searchQuery, setSearchQuery, selectedCategory, setSelectedCategory } = useStore();
   const { data: session, isPending } = authClient.useSession();
   const router = useRouter();
