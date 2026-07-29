@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@grouphub/database";
 import { streamText, tool } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { createOpenAI } from "@ai-sdk/openai";
 import { z } from "zod";
 
 export async function POST(req: NextRequest) {
@@ -28,6 +28,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Using Vercel AI SDK for function calling with OpenAI
+    const openai = createOpenAI({
+      apiKey,
+    });
     const model = openai("gpt-4o-mini"); // Default model for chatbot.md spec
 
     const result = streamText({
@@ -45,7 +48,7 @@ export async function POST(req: NextRequest) {
             category: z.string().optional().describe("Lĩnh vực chuyên môn"),
           }),
           execute: async ({ keyword, platform, category }) => {
-            const where: Record<string, unknown> = { isApproved: true };
+            const where: Record<string, unknown> = { isVerified: true };
             if (keyword) {
               where.OR = [
                 { name: { contains: keyword, mode: "insensitive" } },
@@ -75,7 +78,7 @@ export async function POST(req: NextRequest) {
           parameters: z.object({}),
           execute: async () => {
             const communities = await prisma.community.findMany({
-              where: { isApproved: true },
+              where: { isVerified: true },
               take: 5,
               orderBy: { memberCount: "desc" },
             });
