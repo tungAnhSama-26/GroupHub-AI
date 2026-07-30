@@ -21,10 +21,8 @@ const ACTION_MAP: Record<string, string> = {
 
 function formatDetails(details: string | null) {
   if (!details) return "-";
-  // Rút gọn UUID nếu có trong chuỗi (32 ký tự hexa có gạch ngang)
-  return details.replace(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/gi, (match) => {
-    return `Mã: ...${match.slice(-6)}`;
-  });
+  // Xóa sạch UUID (32 ký tự hexa có gạch ngang) khỏi chuỗi chi tiết
+  return details.replace(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/gi, "").trim();
 }
 
 function getActionColor(action: string) {
