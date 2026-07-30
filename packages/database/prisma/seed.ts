@@ -130,6 +130,7 @@ async function main() {
     await prisma.community.create({
       data: {
         name: name,
+        slug: `group-${i+1}-${Date.now()}`,
         description: `Đây là mô tả cho ${name}`,
         platform: platforms[Math.floor(Math.random() * platforms.length)],
         url: `https://example.com/group/${i+1}_${Date.now()}`,
