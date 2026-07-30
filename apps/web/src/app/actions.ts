@@ -166,22 +166,11 @@ export async function uploadImage(formData: FormData) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const filename = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
-    
-    // Save to public/uploads
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-    
-    // Ensure dir exists
-    try {
-      await fs.access(uploadDir);
-    } catch {
-      await fs.mkdir(uploadDir, { recursive: true });
-    }
+    const base64 = buffer.toString('base64');
+    const mimeType = file.type || 'image/png';
+    const dataUri = `data:${mimeType};base64,${base64}`;
 
-    const filePath = path.join(uploadDir, filename);
-    await fs.writeFile(filePath, buffer);
-
-    return { success: true, url: `/uploads/${filename}` };
+    return { success: true, url: dataUri };
   } catch (error) {
     console.error("Lỗi khi upload ảnh:", error);
     return { success: false, url: "" };
