@@ -70,4 +70,4 @@ Quy trình này được vận hành tự động qua mô hình tuần tự khé
 ## Yêu Cầu Phi Chức Năng & Tiêu Chuẩn Bảo Mật 
 - **Bảo mật kiến trúc dữ liệu:** AI tuyệt đối không tiếp cận trực tiếp chuỗi kết nối Database. Toàn bộ dữ liệu trao đổi được bọc qua các lớp DTO, loại bỏ hoàn toàn các trường nhạy cảm như thông tin người đăng (user_id), email hay mật khẩu. 
 - **Kiểm soát thời gian phản hồi (Latency):** Tổng thời gian xử lý (kể cả streaming) cần bắt đầu hiển thị chữ đầu tiên dưới 2 giây nhằm duy trì mạch tương tác mượt mà của khách hàng. 
-- **Cơ chế xử lý lỗi ngoại lệ chủ động (Fault Tolerance):** Khi API AI mất tín hiệu hoặc timeout, hệ thống tự động đánh chặn và trả về thông báo an toàn cho giao diện: "Hệ thống đang bảo trì, vui lòng quay lại sau ít phút".
+- **Cơ chế xử lý lỗi ngoại lệ chủ động (Fault Tolerance):** Khi API AI mất tín hiệu hoặc timeout, hệ thống tự động đánh chặn và trả về thông báo an toàn cho giao diện: "Hệ thống đang bảo trì, vui lòng quay lại sau ít pz`hút".
