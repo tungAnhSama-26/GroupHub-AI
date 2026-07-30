@@ -63,30 +63,36 @@ export async function POST(req: NextRequest) {
 
     const enrichedSystemPrompt = `${config.systemPrompt}
 
-THÔNG TIN QUAN TRỌNG: Bạn CÓ SẴN kiến thức về các hội nhóm sau đây trong hệ thống. Hãy sử dụng thông tin này để tư vấn trực tiếp cho người dùng:
-DANH SÁCH HỘI NHÓM NỔI BẬT (ĐỊNH DẠNG JSON):
+THÔNG TIN QUAN TRỌNG: Bạn là trợ lý ảo của GroupHub, giúp người dùng tìm kiếm và khám phá các hội nhóm.
+Bạn CÓ SẴN kiến thức về các hội nhóm nổi bật sau đây:
 ${communityContext}
 
-Quy tắc BẮT BUỘC: 
-- Trả lời tự nhiên, thân thiện bằng tiếng Việt.
-- Khi giới thiệu nhóm, BẮT BUỘC phải dùng định dạng JSON trong một block code với ngôn ngữ là \`community_card\`.
-Ví dụ:
+Quy tắc BẮT BUỘC KHI GIAO TIẾP:
+1. Trả lời tự nhiên, thân thiện bằng tiếng Việt.
+2. Tuyệt đối không được in ra các chuỗi như <function=...> hoặc function=... trong câu trả lời!
+3. NẾU người dùng chỉ chào hỏi hoặc hỏi về khả năng của bạn (ví dụ: "Trợ lý AI có thể giúp gì cho tôi?"), CHỈ CẦN trả lời bằng văn bản bình thường giới thiệu bản thân, TUYỆT ĐỐI KHÔNG trả lời bằng JSON hay giới thiệu nhóm nếu chưa được yêu cầu.
+4. CHỈ KHI người dùng yêu cầu tìm nhóm hoặc giới thiệu nhóm, bạn mới giới thiệu nhóm. ĐỂ GIAO DIỆN HIỂN THỊ ĐƯỢC THẺ NHÓM, bạn BẮT BUỘC phải bọc dữ liệu nhóm trong một block code với ngôn ngữ là \`community_card\`.
+TUYỆT ĐỐI KHÔNG BAO GIỜ trả về JSON trần (phải luôn có 3 dấu ngoặc ngược).
+
+Ví dụ định dạng đúng (đây là cách duy nhất để hiển thị nhóm):
+Dưới đây là nhóm bạn cần tìm:
 \`\`\`community_card
-{
-  "name": "Tên Nhóm",
-  "url": "http://localhost:3000/community/slug",
-  "platform": "Facebook",
-  "memberCount": 150000,
-  "description": "Mô tả ngắn"
-}
+[
+  {
+    "name": "Tên Nhóm",
+    "url": "http://localhost:3000/community/slug",
+    "platform": "Facebook",
+    "memberCount": 150000,
+    "description": "Mô tả ngắn"
+  }
+]
 \`\`\`
-- Bạn có thể gộp nhiều nhóm thành một mảng (array) JSON bên trong block \`community_card\` nếu giới thiệu nhiều nhóm cùng lúc.
-- Tuyệt đối không dùng <function=...>!`;
+- Bạn có thể gộp nhiều nhóm thành một mảng (array) JSON bên trong block \`community_card\`.`;
 
     // Lấy API key từ DB hoặc fallback sang env
     const groqApiKey = (config.provider === 'groq' && config.apiKey) ? config.apiKey : process.env.GROQ_API_KEY;
     const openaiApiKey = (config.provider === 'openai' && config.apiKey) ? config.apiKey : process.env.OPENAI_API_KEY;
-    const googleApiKey = (config.provider === 'google' && config.apiKey) ? config.apiKey : process.env.GEMINI_API_KEY;
+    const googleApiKey = (config.provider === 'gemini' && config.apiKey) ? config.apiKey : process.env.GEMINI_API_KEY;
     
     // @ts-ignore
     const groq = createGroq({ apiKey: groqApiKey });
@@ -97,7 +103,7 @@ Ví dụ:
     let primaryModel: any;
     try {
       if (config.provider === 'groq') primaryModel = groq(config.model || "llama-3.1-8b-instant");
-      else if (config.provider === 'google') primaryModel = googleAi(config.model || "gemini-1.5-flash-8b");
+      else if (config.provider === 'gemini') primaryModel = googleAi(config.model || "gemini-1.5-flash-8b");
       else if (config.provider === 'openai') primaryModel = openai(config.model || "gpt-4o-mini");
       else primaryModel = groq("llama-3.1-8b-instant"); // Default fallback
     } catch (e) {

@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   transpilePackages: ["@grouphub/database", "@grouphub/types"],
   serverExternalPackages: ["@prisma/client", "prisma", "openai", "groq-sdk", "@google/generative-ai"],
   images: {

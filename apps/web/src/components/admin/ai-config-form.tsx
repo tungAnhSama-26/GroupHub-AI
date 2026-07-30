@@ -14,7 +14,7 @@ const OpenAILogo = ({ className }: { className?: string }) => (
 
 const GroqLogo = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 100 100" className={className} xmlns="http://www.w3.org/2000/svg">
-    <text font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="40" letter-spacing="-2" fill="currentColor" x="50%" y="54%" text-anchor="middle" dominant-baseline="central">Groq</text>
+    <text fontFamily="system-ui, -apple-system, sans-serif" fontWeight="900" fontSize="40" letterSpacing="-2" fill="currentColor" x="50%" y="54%" textAnchor="middle" dominantBaseline="central">Groq</text>
   </svg>
 );
 
@@ -32,7 +32,7 @@ const GeminiLogo = ({ className }: { className?: string }) => (
 
 const XAiLogo = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 100 100" className={className} xmlns="http://www.w3.org/2000/svg">
-    <text font-family="Georgia, serif" font-style="italic" font-weight="700" font-size="44" fill="currentColor" x="50%" y="54%" text-anchor="middle" dominant-baseline="central">xAI</text>
+    <text fontFamily="Georgia, serif" fontStyle="italic" fontWeight="700" fontSize="44" fill="currentColor" x="50%" y="54%" textAnchor="middle" dominantBaseline="central">xAI</text>
   </svg>
 );
 

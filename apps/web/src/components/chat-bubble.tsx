@@ -10,6 +10,108 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Link from "next/link";
 
+/**
+ * Extracts community data and cleans AI message text.
+ * Returns clean text (no JSON visible) + extracted communities for card rendering.
+ * Handles: code blocks, raw JSON, <function=...> hallucinations, and incomplete streaming.
+ */
+function extractAndCleanMessage(text: string, isStreaming: boolean): {
+  cleanText: string;
+  communities: any[];
+} {
+  let cleaned = text;
+  const communities: any[] = [];
+
+  // 1. Remove ALL variations of function call hallucinations
+  // Catches: <function=tool>, /function=tool>, function=tool>, etc.
+  // Once the AI starts hallucinating tool calls, strip from first match to end
+  cleaned = cleaned.replace(/[<\/]*function=\w+>[\s\S]*/g, '');
+
+  // 2. Remove orphaned </function> closing tags (no matching open tag)
+  cleaned = cleaned.replace(/<\/function>/g, '');
+
+  // 3. During streaming, detect and hide incomplete content
+  if (isStreaming) {
+    // Hide incomplete code blocks (odd number of ```)
+    const codeBlockMarkers = [...cleaned.matchAll(/```/g)];
+    if (codeBlockMarkers.length % 2 !== 0 && codeBlockMarkers.length > 0) {
+      const lastOpenIndex = codeBlockMarkers[codeBlockMarkers.length - 1].index!;
+      cleaned = cleaned.substring(0, lastOpenIndex) + '\n\n⏳ *Đang tải dữ liệu...*';
+      return { cleanText: cleaned.trim(), communities };
+    }
+
+    // Hide incomplete raw JSON (starts with [ or { containing "name" but not properly closed)
+    const rawJsonStart = cleaned.search(/\[\s*\{?\s*"?name"?\s*:?/);
+    if (rawJsonStart !== -1) {
+      const afterJson = cleaned.substring(rawJsonStart);
+      try {
+        JSON.parse(afterJson);
+      } catch {
+        cleaned = cleaned.substring(0, rawJsonStart) + '\n\n⏳ *Đang tải dữ liệu...*';
+        return { cleanText: cleaned.trim(), communities };
+      }
+    }
+
+    // Also check for single object raw JSON
+    const singleObjStart = cleaned.search(/\{\s*\n?\s*"name"\s*:/);
+    if (singleObjStart !== -1 && rawJsonStart === -1) {
+      const afterJson = cleaned.substring(singleObjStart);
+      try {
+        JSON.parse(afterJson);
+      } catch {
+        cleaned = cleaned.substring(0, singleObjStart) + '\n\n⏳ *Đang tải dữ liệu...*';
+        return { cleanText: cleaned.trim(), communities };
+      }
+    }
+  }
+
+  // 4. Extract community JSON from ```community_card or ```json code blocks
+  cleaned = cleaned.replace(/```(?:community_card|json)\s*([\s\S]*?)```/g, (_match, jsonStr) => {
+    try {
+      const parsed = JSON.parse(jsonStr.trim());
+      const arr = Array.isArray(parsed) ? parsed : [parsed];
+      if (arr.length > 0 && arr[0].name) {
+        communities.push(...arr);
+        return '';
+      }
+    } catch { /* not valid JSON, keep original */ }
+    return _match;
+  });
+
+  // 5. Extract raw JSON arrays containing community objects (not in code blocks)
+  cleaned = cleaned.replace(/\[\s*\{[\s\S]*?\}\s*\]/g, (match) => {
+    try {
+      const parsed = JSON.parse(match);
+      const arr = Array.isArray(parsed) ? parsed : [parsed];
+      if (arr.length > 0 && arr[0].name && (arr[0].url || arr[0].platform || arr[0].memberCount)) {
+        communities.push(...arr);
+        return '';
+      }
+    } catch { /* not valid JSON, keep original */ }
+    return match;
+  });
+
+  // 6. Extract single raw JSON objects that look like community data
+  cleaned = cleaned.replace(/\{\s*"name"\s*:[\s\S]*?"(?:platform|url|memberCount)"\s*:[\s\S]*?\}/g, (match) => {
+    try {
+      const parsed = JSON.parse(match);
+      if (parsed.name && (parsed.url || parsed.platform || parsed.memberCount)) {
+        communities.push(parsed);
+        return '';
+      }
+    } catch { /* not valid JSON, keep original */ }
+    return match;
+  });
+
+  // 7. Clean up orphaned JSON characters and extra whitespace left after removals
+  // Remove lines that are just JSON punctuation: [ ] { } ,
+  cleaned = cleaned.replace(/^\s*[[\]{}]\s*$/gm, '');
+  cleaned = cleaned.replace(/^\s*,\s*$/gm, '');
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trim();
+
+  return { cleanText: cleaned, communities };
+}
+
 export function ChatBubble() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -123,13 +225,22 @@ export function ChatBubble() {
                 </div>
               )}
 
-              {messages.map((msg) => {
+              {messages.map((msg, msgIndex) => {
                 const msgText = (msg as any).content || ((msg as any).parts as { text?: string, type?: string }[] | undefined)?.map(p => p.text || "").join("") || (msg as any).text || "";
                 const hasTools = (msg as any).toolInvocations && (msg as any).toolInvocations.length > 0;
                 
+                // Detect if this specific message is currently being streamed
+                const isCurrentlyStreaming = isLoading && msg.role === 'assistant' && msgIndex === messages.length - 1;
+                
+                // Extract communities + clean text (strip JSON, hallucinations, incomplete blocks)
+                const { cleanText: displayText, communities: extractedCommunities } = 
+                  msg.role === 'user' 
+                    ? { cleanText: msgText, communities: [] } 
+                    : extractAndCleanMessage(msgText, isCurrentlyStreaming);
+                
                 return (
                   <div key={msg.id} className={`flex flex-col gap-2 w-full ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                    {(msgText.trim().length > 0 || (!hasTools && msg.role !== 'user')) && (
+                    {(displayText.trim().length > 0 || (!hasTools && msg.role !== 'user' && extractedCommunities.length === 0)) && (
                       <div className={`max-w-[85%] p-3 rounded-2xl break-words whitespace-pre-wrap text-sm ${
                         msg.role === 'user' 
                           ? 'bg-blue-600 text-white rounded-tr-sm' 
@@ -137,60 +248,21 @@ export function ChatBubble() {
                       }`}>
                         {msg.role === "user" ? (
                           msgText
-                        ) : msgText ? (
+                        ) : displayText ? (
                           <div className="prose prose-sm dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 max-w-none">
                             <ReactMarkdown 
                               remarkPlugins={[remarkGfm]}
                               components={{
                                 a: ({ node, ...props }) => <a {...props} className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer" />,
+                                pre({ children, ...props }: any) {
+                                  return <>{children}</>;
+                                },
                                 code({ node, inline, className, children, ...props }: any) {
-                                  const match = /language-(\w+)/.exec(className || '');
-                                  if (!inline && match && match[1] === 'community_card') {
-                                    try {
-                                      const groups = JSON.parse(String(children).replace(/\n$/, ''));
-                                      const groupArray = Array.isArray(groups) ? groups : [groups];
-                                      
-                                      return (
-                                        <div className="flex flex-col gap-2 my-2 w-full">
-                                          {groupArray.map((group: any, idx: number) => {
-                                            const slug = group.slug || group.url?.split('/').pop();
-                                            return (
-                                            <Link 
-                                              key={idx} 
-                                              href={`/community/${slug}`}
-                                              className="block p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:border-blue-500 transition-colors bg-zinc-50 dark:bg-zinc-800/50 no-underline w-full overflow-hidden"
-                                            >
-                                              <div className="font-medium text-zinc-900 dark:text-zinc-100 truncate w-full">{group.name}</div>
-                                              {group.description && (
-                                                <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2 font-normal whitespace-pre-wrap">
-                                                  {group.description}
-                                                </div>
-                                              )}
-                                              <div className="flex flex-wrap gap-2 mt-2 w-full">
-                                                {group.memberCount !== undefined && (
-                                                  <span className="text-xs bg-zinc-200 dark:bg-zinc-700 px-2 py-0.5 rounded-full text-zinc-700 dark:text-zinc-300 font-normal whitespace-nowrap">
-                                                    {group.memberCount.toLocaleString()} thành viên
-                                                  </span>
-                                                )}
-                                                {group.platform && (
-                                                  <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full font-normal whitespace-nowrap">
-                                                    {group.platform}
-                                                  </span>
-                                                )}
-                                              </div>
-                                            </Link>
-                                          )})}
-                                        </div>
-                                      );
-                                    } catch (e) {
-                                      return <code className={className} {...props}>{children}</code>;
-                                    }
-                                  }
                                   return <code className={className} {...props}>{children}</code>;
                                 }
                               }}
                             >
-                              {msgText}
+                              {displayText}
                             </ReactMarkdown>
                           </div>
                         ) : (
@@ -199,6 +271,41 @@ export function ChatBubble() {
                             Đang xử lý...
                           </span>
                         )}
+                      </div>
+                    )}
+                    
+                    {/* Render extracted communities as cards */}
+                    {extractedCommunities.length > 0 && (
+                      <div className="w-full flex flex-col gap-2 mt-1">
+                        {extractedCommunities.map((group: any, idx: number) => {
+                          const slug = group.slug || group.url?.split('/').pop();
+                          return (
+                            <Link 
+                              key={idx} 
+                              href={`/community/${slug}`}
+                              className="block p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:border-blue-500 transition-colors bg-zinc-50 dark:bg-zinc-800/50 no-underline w-full overflow-hidden"
+                            >
+                              <div className="font-medium text-zinc-900 dark:text-zinc-100 truncate w-full">{group.name}</div>
+                              {group.description && (
+                                <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2 font-normal whitespace-pre-wrap">
+                                  {group.description}
+                                </div>
+                              )}
+                              <div className="flex flex-wrap gap-2 mt-2 w-full">
+                                {group.memberCount !== undefined && (
+                                  <span className="text-xs bg-zinc-200 dark:bg-zinc-700 px-2 py-0.5 rounded-full text-zinc-700 dark:text-zinc-300 font-normal whitespace-nowrap">
+                                    {group.memberCount.toLocaleString()} thành viên
+                                  </span>
+                                )}
+                                {group.platform && (
+                                  <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full font-normal whitespace-nowrap">
+                                    {group.platform}
+                                  </span>
+                                )}
+                              </div>
+                            </Link>
+                          );
+                        })}
                       </div>
                     )}
                     
