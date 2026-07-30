@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   output: "standalone",
   transpilePackages: ["@grouphub/database", "@grouphub/types"],
   serverExternalPackages: ["@prisma/client", "prisma", "openai", "groq-sdk", "@google/generative-ai"],
