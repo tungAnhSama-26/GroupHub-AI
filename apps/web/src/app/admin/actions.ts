@@ -230,3 +230,22 @@ export async function rejectUser(userId: string) {
     return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }
+
+export async function getRecentActivities() {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (session?.user?.role !== "ADMIN") return [];
+
+    const activities = await prisma.userActivity.findMany({
+      take: 10,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { name: true, image: true, email: true } }
+      }
+    });
+    return activities;
+  } catch (error) {
+    console.error("Lỗi lấy hoạt động gần đây:", error);
+    return [];
+  }
+}

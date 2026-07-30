@@ -37,7 +37,15 @@ export async function POST(req: Request) {
           connect: { id: professionId }
         }
       },
+      },
     });
+
+    try {
+      const { logActivity } = await import("@/lib/activity-logger");
+      await logActivity(userId, "REGISTER", "Thành viên mới tham gia");
+    } catch (e) {
+      console.error(e);
+    }
 
     return NextResponse.json({ success: true, user: updatedUser }, { status: 200 });
   } catch (error: unknown) {

@@ -15,19 +15,79 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { getRecentActivities } from "@/app/admin/actions";
+
+const ACTION_MAP: Record<string, string> = {
+  VERIFY_COMMUNITY: "Kiểm duyệt hội nhóm",
+  CREATE_COMMUNITY: "Tạo hội nhóm",
+  APPROVE_USER: "Duyệt thành viên",
+  REJECT_USER: "Từ chối thành viên",
+  TOGGLE_USER_ROLE: "Đổi quyền quản trị",
+  UPDATE_USER_ROLE: "Cập nhật quyền",
+  TOGGLE_USER_BAN: "Khóa tài khoản",
+  LOGIN: "Đăng nhập",
+  REGISTER: "Đăng ký mới",
+  CHAT_AI: "Trò chuyện AI",
+};
 
 export function AdminHeaderActions() {
   const { data: session } = useSession();
   const router = useRouter();
+  const [activities, setActivities] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (session?.user?.role === "ADMIN") {
+      getRecentActivities().then(setActivities);
+    }
+  }, [session]);
 
   return (
     <div className="flex items-center gap-4">
       <ThemeToggle />
 
-      <Button variant="ghost" size="icon" className="relative text-zinc-600 dark:text-zinc-400">
-        <Bell className="h-5 w-5" />
-        <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 border-2 border-white dark:border-zinc-900"></span>
-      </Button>
+      <DropdownMenu onOpenChange={(open) => {
+        if (open) {
+          getRecentActivities().then(setActivities);
+        }
+      }}>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="relative text-zinc-600 dark:text-zinc-400">
+            <Bell className="h-5 w-5" />
+            {activities.length > 0 && <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 border-2 border-white dark:border-zinc-900"></span>}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-80 max-h-[400px] overflow-y-auto">
+          <DropdownMenuLabel>Thông báo (Hoạt động gần đây)</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {activities.length === 0 ? (
+            <div className="p-4 text-center text-sm text-zinc-500">Chưa có thông báo nào</div>
+          ) : (
+            activities.map((activity) => (
+              <DropdownMenuItem key={activity.id} className="flex flex-col items-start p-3 gap-1 cursor-default">
+                <div className="flex items-center gap-2 w-full">
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={activity.user.image || ""} />
+                    <AvatarFallback>{activity.user.name?.charAt(0) || "U"}</AvatarFallback>
+                  </Avatar>
+                  <span className="font-semibold text-sm line-clamp-1">{activity.user.name}</span>
+                  <span className="text-xs text-zinc-500 ml-auto whitespace-nowrap">
+                    {new Date(activity.createdAt).toLocaleDateString('vi-VN')}
+                  </span>
+                </div>
+                <div className="text-sm">
+                  <span className="text-blue-600 font-medium">{ACTION_MAP[activity.action] || activity.action}</span>
+                  {activity.details && <span className="text-zinc-600 dark:text-zinc-400 text-xs block mt-0.5 line-clamp-2">{activity.details.replace(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/gi, "").trim()}</span>}
+                </div>
+              </DropdownMenuItem>
+            ))
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => router.push('/admin/users/history')} className="justify-center cursor-pointer text-blue-600 font-medium">
+            Xem tất cả lịch sử
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {session?.user && (
         <DropdownMenu>

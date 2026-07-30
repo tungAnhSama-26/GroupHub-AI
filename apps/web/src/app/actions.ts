@@ -117,9 +117,16 @@ export async function submitCommunity(data: {
         logoUrl: data.logoUrl || null,
         memberCount: data.memberCount,
         ownerId: user.id,
-        isVerified: false, // Luôn false khi người dùng tự đăng
+        isVerified: user.role === 'ADMIN', // Tự động duyệt nếu là Admin
       }
     });
+
+    try {
+      const { logActivity } = await import("@/lib/activity-logger");
+      await logActivity(user.id, "CREATE_COMMUNITY", `Đăng ký nhóm ${data.name}`);
+    } catch (e) {
+      console.error(e);
+    }
 
     revalidatePath("/admin/groups/approve"); // Báo cho admin biết có nhóm mới chờ duyệt
     

@@ -11,12 +11,15 @@ import { AdminHeader } from "@/components/admin/admin-header";
 
 const ACTION_MAP: Record<string, string> = {
   VERIFY_COMMUNITY: "Kiểm duyệt hội nhóm",
+  CREATE_COMMUNITY: "Tạo hội nhóm",
   APPROVE_USER: "Duyệt thành viên",
   REJECT_USER: "Từ chối thành viên",
   TOGGLE_USER_ROLE: "Đổi quyền quản trị",
   UPDATE_USER_ROLE: "Cập nhật quyền",
   TOGGLE_USER_BAN: "Khóa tài khoản",
   LOGIN: "Đăng nhập",
+  REGISTER: "Đăng ký mới",
+  CHAT_AI: "Trò chuyện AI",
 };
 
 function formatDetails(details: string | null) {

@@ -15,6 +15,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Dữ liệu tin nhắn không hợp lệ." }, { status: 400 });
     }
 
+    try {
+      const { auth } = await import("@/lib/auth");
+      const { headers } = await import("next/headers");
+      const { logActivity } = await import("@/lib/activity-logger");
+      const session = await auth.api.getSession({ headers: await headers() });
+      if (session?.user?.id) {
+        // Log once per session to avoid spam, or log every time. Let's log every message for now.
+        await logActivity(session.user.id, "CHAT_AI", "Trò chuyện với trợ lý ảo");
+      }
+    } catch (e) {
+      console.error("Lỗi log activity chat:", e);
+    }
+
     const formattedMessages = messages
       .filter((msg: any) => {
         // Strip out tool messages and assistant messages with tool calls to prevent schema validation errors in AI SDK v5
