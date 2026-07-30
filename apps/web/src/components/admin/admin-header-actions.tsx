@@ -40,7 +40,7 @@ export function AdminHeaderActions() {
     if (session?.user?.role === "ADMIN") {
       getRecentActivities().then(setActivities);
     }
-  }, [session]);
+  }, [session?.user?.id, session?.user?.role]);
 
   return (
     <div className="flex items-center gap-4">
@@ -54,14 +54,16 @@ export function AdminHeaderActions() {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="relative text-zinc-600 dark:text-zinc-400">
             <Bell className="h-5 w-5" />
-            {activities.length > 0 && <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 border-2 border-white dark:border-zinc-900"></span>}
+            {activities.length > 0 ? <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 border-2 border-white dark:border-zinc-900"></span> : null}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80 max-h-[400px] overflow-y-auto">
           <DropdownMenuLabel>Thông báo (Hoạt động gần đây)</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {activities.length === 0 ? (
-            <div className="p-4 text-center text-sm text-zinc-500">Chưa có thông báo nào</div>
+            <DropdownMenuItem disabled className="justify-center p-4 text-zinc-500">
+              Chưa có thông báo nào
+            </DropdownMenuItem>
           ) : (
             activities.map((activity) => (
               <DropdownMenuItem key={activity.id} className="flex flex-col items-start p-3 gap-1 cursor-default">
