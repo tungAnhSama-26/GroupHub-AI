@@ -36,8 +36,7 @@ export async function POST(req: Request) {
         professions: {
           connect: { id: professionId }
         }
-      },
-      },
+      }
     });
 
     try {
