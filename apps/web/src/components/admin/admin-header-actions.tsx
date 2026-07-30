@@ -69,10 +69,10 @@ export function AdminHeaderActions() {
               <DropdownMenuItem key={activity.id} className="flex flex-col items-start p-3 gap-1 cursor-default">
                 <div className="flex items-center gap-2 w-full">
                   <Avatar className="h-6 w-6">
-                    <AvatarImage src={activity.user.image || ""} />
-                    <AvatarFallback>{activity.user.name?.charAt(0) || "U"}</AvatarFallback>
+                    <AvatarImage src={activity.user?.image || ""} />
+                    <AvatarFallback>{activity.user?.name?.charAt(0) || "U"}</AvatarFallback>
                   </Avatar>
-                  <span className="font-semibold text-sm line-clamp-1">{activity.user.name}</span>
+                  <span className="font-semibold text-sm line-clamp-1">{activity.user?.name || "Hệ thống"}</span>
                   <span className="text-xs text-zinc-500 ml-auto whitespace-nowrap">
                     {new Date(activity.createdAt).toLocaleDateString('vi-VN')}
                   </span>
@@ -102,7 +102,7 @@ export function AdminHeaderActions() {
               <Avatar className="h-10 w-10 border shadow-sm hover:ring-2 hover:ring-blue-100 transition-all">
                 <AvatarImage src={session.user.image || ""} alt={session.user.name || ""} />
                 <AvatarFallback className="bg-blue-100 text-blue-700 font-medium">
-                  {session.user.name?.charAt(0).toUpperCase() || "A"}
+                  {session.user.name?.charAt(0)?.toUpperCase() || "A"}
                 </AvatarFallback>
               </Avatar>
             </div>
