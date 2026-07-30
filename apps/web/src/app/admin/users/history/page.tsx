@@ -9,6 +9,31 @@ import { DataTablePagination } from "@/components/admin/data-table-pagination";
 import { Prisma } from "@grouphub/database";
 import { AdminHeader } from "@/components/admin/admin-header";
 
+const ACTION_MAP: Record<string, string> = {
+  VERIFY_COMMUNITY: "Kiểm duyệt hội nhóm",
+  APPROVE_USER: "Duyệt thành viên",
+  REJECT_USER: "Từ chối thành viên",
+  TOGGLE_USER_ROLE: "Đổi quyền quản trị",
+  UPDATE_USER_ROLE: "Cập nhật quyền",
+  TOGGLE_USER_BAN: "Khóa tài khoản",
+  LOGIN: "Đăng nhập",
+};
+
+function formatDetails(details: string | null) {
+  if (!details) return "-";
+  // Rút gọn UUID nếu có trong chuỗi (32 ký tự hexa có gạch ngang)
+  return details.replace(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/gi, (match) => {
+    return `Mã: ...${match.slice(-6)}`;
+  });
+}
+
+function getActionColor(action: string) {
+  if (action.includes("VERIFY") || action.includes("APPROVE")) return "bg-green-100 text-green-700";
+  if (action.includes("REJECT") || action.includes("BAN") || action.includes("DELETE")) return "bg-red-100 text-red-700";
+  if (action.includes("UPDATE") || action.includes("TOGGLE")) return "bg-blue-100 text-blue-700";
+  return "bg-zinc-100 text-zinc-700";
+}
+
 export default async function UserHistoryPage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
@@ -94,20 +119,21 @@ export default async function UserHistoryPage(props: {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className="font-mono text-[10px] uppercase">
-                        {activity.action}
+                      <Badge variant="secondary" className={`font-medium border-0 ${getActionColor(activity.action)}`}>
+                        {ACTION_MAP[activity.action] || activity.action}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-zinc-600 dark:text-zinc-400">
+                    <TableCell className="text-sm text-zinc-700 dark:text-zinc-300">
                       <span className="line-clamp-2" title={activity.details || ""}>
-                        {activity.details || "-"}
+                        {formatDetails(activity.details)}
                       </span>
                     </TableCell>
-                    <TableCell className="text-xs text-zinc-500">
-                      <div className="flex flex-col">
-                        <span>{format(new Date(activity.createdAt), 'HH:mm:ss', { locale: vi })}</span>
-                        <span>{format(new Date(activity.createdAt), 'dd/MM/yyyy', { locale: vi })}</span>
-                        <span className="text-zinc-400 italic text-[10px] mt-1">IP: {activity.ipAddress}</span>
+                    <TableCell>
+                      <div className="flex flex-col text-sm">
+                        <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                          {format(new Date(activity.createdAt), 'HH:mm', { locale: vi })} - {format(new Date(activity.createdAt), 'dd/MM/yyyy', { locale: vi })}
+                        </span>
+                        <span className="text-zinc-400 text-xs mt-0.5">IP: {activity.ipAddress}</span>
                       </div>
                     </TableCell>
                   </TableRow>
