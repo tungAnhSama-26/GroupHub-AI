@@ -38,11 +38,15 @@ Trong dự án GroupHub-AI, hệ thống được thiết kế theo kiến trúc
 ### 1. Quản trị viên
 Quản trị viên là người có quyền cao nhất trong hệ thống và là quyền duy nhất quản lý toàn bộ hệ thống.
 
-- **Tổng quan hệ thống:** Xem thống kê chi tiết về số lượng cộng đồng, số lượng người dùng mới, các ngành nghề phổ biến và tình trạng tài nguyên chung của hệ thống.
-- **Quản lý cấu hình AI:** Cho phép quản trị viên trực tiếp tùy chỉnh tính cách, giới hạn chuyên môn (System Prompt) cho trợ lý ảo, cũng như thay đổi các thiết lập mô hình AI ngay trên giao diện quản trị một cách linh hoạt.
-- **Quản lý người dùng:** Quản lý toàn bộ người dùng đã đăng ký vào hệ thống. Cung cấp bộ lọc trạng thái hoạt động (chưa duyệt, đã duyệt, khóa tài khoản) và có thể tìm kiếm phân quyền hệ thống một cách dễ dàng.
-- **Nhật ký hệ thống:** Hiển thị toàn bộ lịch sử thao tác của người dùng (tạo nhóm, cập nhật thông tin) khi sử dụng website nhằm đảm bảo tính minh bạch.
-- **Quản lý cộng đồng (Xét duyệt):** Quản trị viên kiểm duyệt các cộng đồng do người dùng gửi lên. Hệ thống cung cấp bộ lọc trạng thái để dễ dàng tìm kiếm và chỉ những cộng đồng đạt chuẩn mới được "Phê duyệt" để hiển thị lên trang chủ.
+- **Tổng quan hệ thống:** Xem thống kê chi tiết về số lượng hội nhóm, số lượng người dùng mới, tỷ lệ các ngành nghề phổ biến, lượt truy cập trong tuần và tình trạng hoạt động chung của hệ thống.
+- **Quản lý người dùng:** Cho phép xem danh sách toàn bộ người dùng, xem chi tiết lịch sử hoạt động, khóa/mở khóa tài khoản hoặc thay đổi quyền hạn.
+- **Quản lý Nhóm ngành nghề:** Cho phép Quản trị viên tạo, chỉnh sửa và quản lý các nhóm danh mục lớn, làm cơ sở để phân loại cấu trúc ngành nghề của hệ thống.
+- **Quản lý Ngành nghề:** Cấu hình chi tiết các lĩnh vực, ngành nghề chuyên môn cụ thể, giúp việc phân loại hội nhóm trở nên mạch lạc và hỗ trợ người dùng tìm kiếm dễ dàng hơn.
+- **Quản lý Hội nhóm:** Xem toàn bộ danh sách hội nhóm trên nền tảng, có quyền chỉnh sửa thông tin hoặc xóa các hội nhóm vi phạm tiêu chuẩn cộng đồng.
+- **Duyệt người dùng:** Hệ thống yêu cầu kiểm duyệt tài khoản khắt khe. Quản trị viên sẽ đánh giá và quyết định cấp quyền truy cập (Phê duyệt) hoặc Từ chối đối với các yêu cầu đăng ký tài khoản mới.
+- **Duyệt hội nhóm:** Mọi cộng đồng do người dùng đóng góp đều phải qua vòng kiểm duyệt. Quản trị viên sẽ xác minh tính chân thực và chất lượng của nhóm trước khi "Phê duyệt" để hiển thị công khai lên trang chủ.
+- **Nhật ký hệ thống (Lịch sử hoạt động):** Hiển thị chi tiết toàn bộ lịch sử thao tác của tất cả người dùng và quản trị viên (ai đã làm gì, vào thời gian nào) nhằm đảm bảo tính minh bạch tuyệt đối.
+- **Cài đặt hệ thống & Cấu hình AI:** Cho phép quản trị viên trực tiếp cấu hình hệ thống, tùy chỉnh tính cách (System Prompt) cho trợ lý ảo AI, thay đổi mã khóa API (API Key) và thiết lập mô hình AI ngay trên giao diện mà không cần can thiệp vào code.
 
 ### 2. Người dùng
 - **Khám phá & Tìm kiếm:** Dễ dàng tìm kiếm các cộng đồng nổi bật bằng thanh tìm kiếm có hỗ trợ Debounce chống độ trễ, hoặc lọc theo từng nhóm ngành nghề chuyên biệt.
