@@ -23,13 +23,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 
 // Using Community from database
 import { Community } from "@grouphub/database";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export default function HomePage() {
   const { searchQuery, setSearchQuery, selectedCategory, setSelectedCategory } = useStore();
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const { data: session, isPending } = authClient.useSession();
   const router = useRouter();
 
@@ -62,12 +64,13 @@ export default function HomePage() {
     router.push("/submit-community");
   };
   
-  const { data: communities = [], isLoading } = useQuery<Community[]>({
-    queryKey: ['communities', searchQuery, selectedCategory],
+  const { data: communities = [], isLoading, isFetching } = useQuery<Community[]>({
+    queryKey: ['communities', debouncedSearchQuery, selectedCategory],
     queryFn: async () => {
-      const res = await getVerifiedCommunities(searchQuery, selectedCategory || "");
+      const res = await getVerifiedCommunities(debouncedSearchQuery, selectedCategory || "");
       return res.success ? (res.data as Community[]) : [];
-    }
+    },
+    placeholderData: keepPreviousData,
   });
 
   const { data: filterCategories = [] } = useQuery<string[]>({
