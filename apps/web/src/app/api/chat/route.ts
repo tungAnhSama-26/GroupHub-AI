@@ -20,12 +20,15 @@ export async function POST(req: NextRequest) {
       const { headers } = await import("next/headers");
       const { logActivity } = await import("@/lib/activity-logger");
       const session = await auth.api.getSession({ headers: await headers() });
+      let isAdmin = false;
       if (session?.user?.id) {
         // Log once per session to avoid spam, or log every time. Let's log every message for now.
         await logActivity(session.user.id, "CHAT_AI", "Trò chuyện với trợ lý ảo");
+        const dbUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true }});
+        isAdmin = dbUser?.role === "ADMIN";
       }
     } catch (e) {
-      console.error("Lỗi log activity chat:", e);
+      console.error("Lỗi log activity chat hoặc check role:", e);
     }
 
     const formattedMessages = messages
@@ -74,7 +77,22 @@ export async function POST(req: NextRequest) {
       })
     ).join('\n');
 
-    const enrichedSystemPrompt = `${config.systemPrompt}
+    let enrichedSystemPrompt = "";
+
+    if (isAdmin) {
+      enrichedSystemPrompt = `${config.systemPrompt}
+
+THÔNG TIN QUAN TRỌNG: Bạn là trợ lý ảo đặc biệt dành riêng cho QUẢN TRỊ VIÊN (ADMIN) của hệ thống GroupHub AI.
+Chức năng chính của bạn là hỗ trợ Admin tra cứu thống kê hệ thống, xem thông báo hoạt động, và giám sát tình trạng các hội nhóm.
+
+Quy tắc BẮT BUỘC KHI GIAO TIẾP DÀNH CHO ADMIN:
+1. Trả lời tự nhiên, chuyên nghiệp, súc tích bằng tiếng Việt.
+2. TUYỆT ĐỐI KHÔNG trả về định dạng JSON trần. Các dữ liệu thống kê hãy trình bày dưới dạng danh sách hoặc bảng (markdown) dễ nhìn.
+3. GIỚI HẠN CHỨC NĂNG: Bạn CHỈ ĐƯỢC PHÉP hỗ trợ các yêu cầu liên quan đến quản trị hệ thống GroupHub (thống kê người dùng, cộng đồng, thông báo/hoạt động hệ thống) và tìm kiếm cộng đồng.
+4. TỪ CHỐI YÊU CẦU NGOÀI LUỒNG: Mặc dù đây là Admin, nhưng nếu họ yêu cầu viết code, làm toán, tư vấn đời sống, dịch thuật văn bản không liên quan... bạn VẪN PHẢI TỪ CHỐI lịch sự và nhắc nhở rằng bạn là AI chuyên biệt cho việc quản trị nền tảng GroupHub.
+5. Sử dụng công cụ \`getSystemStats\` để lấy số liệu thực tế khi Admin hỏi về thống kê hệ thống hoặc thông báo mới nhất.`;
+    } else {
+      enrichedSystemPrompt = `${config.systemPrompt}
 
 THÔNG TIN QUAN TRỌNG: Bạn là trợ lý ảo của GroupHub, giúp người dùng tìm kiếm và khám phá các hội nhóm.
 Bạn CÓ SẴN kiến thức về các hội nhóm nổi bật sau đây:
@@ -103,6 +121,7 @@ Dưới đây là nhóm bạn cần tìm:
 ]
 \`\`\`
 - Bạn có thể gộp nhiều nhóm thành một mảng (array) JSON bên trong block \`community_card\`.`;
+    }
 
     // Lấy API key từ DB hoặc fallback sang env
     const groqApiKey = (config.provider === 'groq' && config.apiKey) ? config.apiKey : process.env.GROQ_API_KEY;
@@ -266,6 +285,33 @@ Dưới đây là nhóm bạn cần tìm:
               url: c.url,
             }));
           },
+        }),
+        // @ts-ignore
+        getSystemStats: tool({
+          description: "Lấy thống kê hệ thống dành cho Admin: số lượng người dùng, tổng số cộng đồng, số cộng đồng đang chờ duyệt, và các hoạt động hệ thống gần nhất.",
+          parameters: z.object({}),
+          // @ts-ignore
+          execute: async () => {
+            const totalUsers = await prisma.user.count();
+            const totalCommunities = await prisma.community.count({ where: { isVerified: true } });
+            const pendingCommunities = await prisma.community.count({ where: { isVerified: false } });
+            const recentActivities = await prisma.userActivity.findMany({
+              take: 5,
+              orderBy: { createdAt: "desc" },
+              include: { user: { select: { name: true, email: true } } }
+            });
+            return {
+              totalUsers,
+              totalCommunities,
+              pendingCommunities,
+              recentActivities: recentActivities.map(a => ({
+                action: a.action,
+                details: a.details,
+                user: a.user?.name || a.user?.email || "Unknown",
+                time: a.createdAt
+              }))
+            };
+          }
         }),
       }
     } as any);
