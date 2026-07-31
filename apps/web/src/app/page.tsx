@@ -88,10 +88,9 @@ export default function HomePage() {
       <header className="fixed top-0 w-full border-b border-neutral-200 bg-white/80 backdrop-blur-md z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between relative">
           <div className="flex items-center gap-2 z-10">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center shadow-sm">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-bold text-xl tracking-tight text-neutral-900">GroupHub <span className="text-blue-600">AI</span></span>
+            <Link href="/" className="flex items-center">
+              <img src="/logo.png" alt="GroupHub AI" className="h-10 w-auto object-contain" />
+            </Link>
           </div>
           <nav className="hidden md:flex gap-8 text-sm font-medium text-neutral-500 absolute left-1/2 -translate-x-1/2">
             <Link href="/" className="flex items-center gap-1.5 hover:text-blue-600 transition-colors">

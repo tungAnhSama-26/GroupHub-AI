@@ -119,11 +119,14 @@ export default function RegisterPage() {
 
   return (
     <div className="w-full flex flex-col space-y-6">
-      <div className="flex flex-col space-y-2 text-center mb-4">
-        <h2 className="text-2xl font-bold tracking-tight">Tạo tài khoản mới</h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Điền đầy đủ thông tin bên dưới để bắt đầu
-        </p>
+      <div className="flex flex-col items-center justify-center space-y-4 text-center mb-4">
+        <img src="/logo.png" alt="GroupHub AI Logo" className="h-20 w-auto object-contain" />
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Tạo tài khoản mới</h2>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            Điền đầy đủ thông tin bên dưới để bắt đầu
+          </p>
+        </div>
       </div>
 
       {error && (

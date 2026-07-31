@@ -91,7 +91,7 @@ export function AdminSidebar() {
     >
       <div className="flex h-16 items-center justify-between px-4 border-b shrink-0">
         {!isCollapsed && (
-          <span className="text-lg font-bold text-blue-600 dark:text-blue-400 truncate">GroupHub Admin</span>
+          <img src="/logo.png" alt="GroupHub AI Logo" className="h-8 w-auto object-contain" />
         )}
         <Button
           variant="ghost"

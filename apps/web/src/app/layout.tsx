@@ -10,8 +10,8 @@ import Providers from "@/components/providers";
 import { ChatBubble } from "@/components/chat-bubble";
 
 export const metadata: Metadata = {
-  title: "GroupHub AI - Discover Your Next Community",
-  description: "GroupHub AI is an AI-powered directory for discovering online communities across the Internet.",
+  title: "GroupHub AI - Kết Nối Nhóm - Chia Sẻ Tri Thức - AI Hỗ Trợ",
+  description: "GroupHub AI - Nền tảng kết nối nhóm, chia sẻ tri thức với sự hỗ trợ của trí tuệ nhân tạo.",
 };
 
 export default function RootLayout({
