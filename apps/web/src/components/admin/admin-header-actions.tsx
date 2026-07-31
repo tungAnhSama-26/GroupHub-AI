@@ -39,6 +39,13 @@ export function AdminHeaderActions() {
   useEffect(() => {
     if (session?.user?.role === "ADMIN") {
       getRecentActivities().then(setActivities);
+
+      // Setup polling for real-time notifications every 15 seconds
+      const interval = setInterval(() => {
+        getRecentActivities().then(setActivities);
+      }, 15000);
+
+      return () => clearInterval(interval);
     }
   }, [session?.user?.id, session?.user?.role]);
 

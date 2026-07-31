@@ -9,6 +9,7 @@ import { DefaultChatTransport } from "ai";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 
 /**
@@ -140,6 +141,7 @@ export function ChatBubble() {
   const suggestedPrompts = isAdmin ? adminPrompts : userPrompts;
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     // Auto-scroll to bottom
@@ -149,6 +151,11 @@ export function ChatBubble() {
   }, [messages]);
 
   const isLoading = status === "submitted" || status === "streaming";
+
+  // Hide chat bubble on authentication and onboarding pages
+  if (pathname === '/login' || pathname === '/register' || pathname === '/onboarding') {
+    return null;
+  }
 
   const onFormSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -210,7 +217,7 @@ export function ChatBubble() {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-zinc-50 dark:bg-zinc-900/50">
+            <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-zinc-50 dark:bg-zinc-900/50 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar-thumb]:rounded-full dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700">
               {/* Default Welcome Message & Suggested Prompts */}
               {messages.length === 0 && (
                 <div className="flex flex-col items-center justify-center text-center mt-4 mb-4 space-y-3">
