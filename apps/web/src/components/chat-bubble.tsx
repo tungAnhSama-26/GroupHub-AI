@@ -9,6 +9,7 @@ import { DefaultChatTransport } from "ai";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Link from "next/link";
+import { authClient } from "@/lib/auth-client";
 
 /**
  * Extracts community data and cleans AI message text.
@@ -118,6 +119,25 @@ export function ChatBubble() {
   const { messages, sendMessage, status, setMessages, error } = useChat({
     transport: new DefaultChatTransport({ api: "/api/chat" })
   });
+  
+  const { data: session } = authClient.useSession();
+  const isAdmin = (session?.user as any)?.role === "ADMIN" || session?.user?.email === "tunganht26@gmail.com";
+
+  const adminPrompts = [
+    "Cho tôi xem thống kê tổng quan của hệ thống",
+    "Có bao nhiêu cộng đồng đang chờ duyệt?",
+    "Các hoạt động gần đây của người dùng là gì?",
+    "Trợ lý AI quản trị có thể làm gì?"
+  ];
+
+  const userPrompts = [
+    "Giới thiệu cho tôi các cộng đồng nổi bật nhất",
+    "Có những nhóm nào đông thành viên nhất?",
+    "Giúp tôi tìm nhóm theo một lĩnh vực cụ thể",
+    "Trợ lý AI có thể giúp gì cho tôi?"
+  ];
+
+  const suggestedPrompts = isAdmin ? adminPrompts : userPrompts;
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -205,12 +225,7 @@ export function ChatBubble() {
                   </p>
                   
                   <div className="flex flex-col gap-2 w-full mt-4 px-2">
-                    {[
-                      "Giới thiệu cho tôi các cộng đồng nổi bật nhất",
-                      "Có những nhóm nào đông thành viên nhất?",
-                      "Giúp tôi tìm nhóm theo một lĩnh vực cụ thể",
-                      "Trợ lý AI có thể giúp gì cho tôi?"
-                    ].map((prompt, idx) => (
+                    {suggestedPrompts.map((prompt, idx) => (
                       <button
                         key={idx}
                         onClick={() => {
