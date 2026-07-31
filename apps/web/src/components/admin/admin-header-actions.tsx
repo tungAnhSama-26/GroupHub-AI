@@ -46,21 +46,34 @@ export function AdminHeaderActions() {
     <div className="flex items-center gap-4">
       <ThemeToggle />
 
-      <DropdownMenu>
-        <DropdownMenuTrigger className="relative flex items-center justify-center rounded-md text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 h-10 w-10 outline-none">
+      <div className="relative">
+        <button
+          onClick={() => {
+            if (!activities.length) {
+              getRecentActivities().then(setActivities);
+            }
+            // Toggle open state
+            const btn = document.getElementById('notification-dropdown');
+            if (btn) {
+              btn.classList.toggle('hidden');
+            }
+          }}
+          className="relative flex items-center justify-center rounded-md text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 h-10 w-10 outline-none"
+        >
           <Bell className="h-5 w-5" />
           {activities.length > 0 ? <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 border-2 border-white dark:border-zinc-900"></span> : null}
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-80 max-h-[400px] overflow-y-auto">
-          <DropdownMenuLabel>Thông báo (Hoạt động gần đây)</DropdownMenuLabel>
-          <DropdownMenuSeparator />
+        </button>
+
+        <div id="notification-dropdown" className="hidden absolute right-0 mt-2 w-80 max-h-[400px] overflow-y-auto rounded-lg bg-white dark:bg-zinc-950 p-1 text-zinc-900 dark:text-zinc-50 shadow-md ring-1 ring-zinc-200 dark:ring-zinc-800 z-50">
+          <div className="px-2 py-2 text-sm font-medium text-zinc-500">Thông báo (Hoạt động gần đây)</div>
+          <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-1"></div>
           {activities.length === 0 ? (
-            <DropdownMenuItem disabled className="justify-center p-4 text-zinc-500">
+            <div className="flex items-center justify-center p-4 text-sm text-zinc-500">
               Chưa có thông báo nào
-            </DropdownMenuItem>
+            </div>
           ) : (
             activities.map((activity) => (
-              <DropdownMenuItem key={activity.id} className="flex flex-col items-start p-3 gap-1 cursor-default">
+              <div key={activity.id} className="flex flex-col items-start p-3 gap-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md">
                 <div className="flex items-center gap-2 w-full">
                   <Avatar className="h-6 w-6">
                     <AvatarImage src={activity.user?.image || ""} />
@@ -75,15 +88,18 @@ export function AdminHeaderActions() {
                   <span className="text-blue-600 font-medium">{ACTION_MAP[activity.action] || activity.action}</span>
                   {activity.details && <span className="text-zinc-600 dark:text-zinc-400 text-xs block mt-0.5 line-clamp-2">{activity.details.replace(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/gi, "").trim()}</span>}
                 </div>
-              </DropdownMenuItem>
+              </div>
             ))
           )}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => router.push('/admin/users/history')} className="justify-center cursor-pointer text-blue-600 font-medium">
+          <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-1"></div>
+          <div 
+            onClick={() => router.push('/admin/users/history')} 
+            className="flex items-center justify-center p-2 text-sm text-blue-600 font-medium cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md"
+          >
             Xem tất cả lịch sử
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </div>
+        </div>
+      </div>
 
       {session?.user && (
         <DropdownMenu>
