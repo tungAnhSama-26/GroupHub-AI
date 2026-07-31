@@ -42,6 +42,23 @@ export function AdminHeaderActions() {
     }
   }, [session?.user?.id, session?.user?.role]);
 
+  const getRedirectUrl = (action: string) => {
+    switch (action) {
+      case 'VERIFY_COMMUNITY':
+      case 'CREATE_COMMUNITY':
+        return '/admin/groups';
+      case 'APPROVE_USER':
+      case 'TOGGLE_USER_ROLE':
+      case 'UPDATE_USER_ROLE':
+      case 'TOGGLE_USER_BAN':
+        return '/admin/users';
+      case 'REGISTER':
+        return '/admin/users/approve';
+      default:
+        return '/admin/users/history';
+    }
+  };
+
   return (
     <div className="flex items-center gap-4">
       <ThemeToggle />
@@ -73,7 +90,15 @@ export function AdminHeaderActions() {
             </div>
           ) : (
             activities.map((activity) => (
-              <div key={activity.id} className="flex flex-col items-start p-3 gap-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md">
+              <div 
+                key={activity.id} 
+                onClick={() => {
+                  router.push(getRedirectUrl(activity.action));
+                  const btn = document.getElementById('notification-dropdown');
+                  if (btn) btn.classList.add('hidden');
+                }}
+                className="flex flex-col items-start p-3 gap-1 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
+              >
                 <div className="flex items-center gap-2 w-full">
                   <Avatar className="h-6 w-6">
                     <AvatarImage src={activity.user?.image || ""} />
@@ -93,8 +118,12 @@ export function AdminHeaderActions() {
           )}
           <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-1"></div>
           <div 
-            onClick={() => router.push('/admin/users/history')} 
-            className="flex items-center justify-center p-2 text-sm text-blue-600 font-medium cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md"
+            onClick={() => {
+              router.push('/admin/users/history');
+              const btn = document.getElementById('notification-dropdown');
+              if (btn) btn.classList.add('hidden');
+            }} 
+            className="flex items-center justify-center p-2 text-sm text-blue-600 font-medium cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
           >
             Xem tất cả lịch sử
           </div>
