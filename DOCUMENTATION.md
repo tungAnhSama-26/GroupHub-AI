@@ -13,6 +13,25 @@ Nền tảng tích hợp trợ lý ảo AI giúp tư vấn thông minh, tự đ�
   - Kiến trúc tích hợp: Vercel AI SDK.
 - **Xác thực & Bảo mật:** Better Auth (Hỗ trợ đăng nhập Google OAuth & Xác thực OTP qua Email).
 
+**Bảng: Chi tiết thư viện sử dụng**
+
+| STT | Tên Thư viện | Phiên bản | Bản quyền |
+| :---: | :--- | :---: | :---: |
+| 1 | next | 15.0.0 | MIT |
+| 2 | react | 19.2.4 | MIT |
+| 3 | tailwindcss | 4.0.0 | MIT |
+| 4 | ai (Vercel AI SDK) | 7.0.41 | Apache 2.0 |
+| 5 | @tanstack/react-query | 5.101.4 | MIT |
+| 6 | prisma | 6.2.1 | Apache 2.0 |
+| 7 | better-auth | 1.4.3 | MIT |
+| 8 | zustand | 5.0.14 | MIT |
+| 9 | framer-motion | 12.42.2 | MIT |
+| 10 | recharts | 3.10.1 | MIT |
+| 11 | react-markdown | 10.1.0 | MIT |
+| 12 | lucide-react | 1.25.0 | ISC |
+| 13 | nodemailer | 9.0.3 | MIT |
+| 14 | sweetalert2 | 11.26.25 | MIT |
+
 ## III. Phân quyền và các chức năng chính
 Trong dự án GroupHub-AI, hệ thống được thiết kế theo kiến trúc tối ưu hóa và bảo mật dữ liệu. Ứng dụng được chia thành 2 quyền chính là **Quản trị viên** và **Người dùng**.
 
