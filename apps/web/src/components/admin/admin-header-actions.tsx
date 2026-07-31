@@ -46,16 +46,10 @@ export function AdminHeaderActions() {
     <div className="flex items-center gap-4">
       <ThemeToggle />
 
-      <DropdownMenu onOpenChange={(open) => {
-        if (open) {
-          getRecentActivities().then(setActivities);
-        }
-      }}>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="relative text-zinc-600 dark:text-zinc-400">
-            <Bell className="h-5 w-5" />
-            {activities.length > 0 ? <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 border-2 border-white dark:border-zinc-900"></span> : null}
-          </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger className="relative flex items-center justify-center rounded-md text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 h-10 w-10 outline-none">
+          <Bell className="h-5 w-5" />
+          {activities.length > 0 ? <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 border-2 border-white dark:border-zinc-900"></span> : null}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80 max-h-[400px] overflow-y-auto">
           <DropdownMenuLabel>Thông báo (Hoạt động gần đây)</DropdownMenuLabel>
