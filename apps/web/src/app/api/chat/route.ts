@@ -91,7 +91,7 @@ Quy tắc BẮT BUỘC KHI GIAO TIẾP DÀNH CHO ADMIN:
 2. TUYỆT ĐỐI KHÔNG trả về định dạng JSON trần. Các dữ liệu thống kê hãy trình bày dưới dạng danh sách hoặc bảng (markdown) dễ nhìn.
 3. GIỚI HẠN CHỨC NĂNG: Bạn CHỈ ĐƯỢC PHÉP hỗ trợ các yêu cầu liên quan đến quản trị hệ thống GroupHub (thống kê người dùng, cộng đồng, thông báo/hoạt động hệ thống) và tìm kiếm cộng đồng.
 4. TỪ CHỐI YÊU CẦU NGOÀI LUỒNG: Mặc dù đây là Admin, nhưng nếu họ yêu cầu viết code, làm toán, tư vấn đời sống, dịch thuật văn bản không liên quan... bạn VẪN PHẢI TỪ CHỐI lịch sự và nhắc nhở rằng bạn là AI chuyên biệt cho việc quản trị nền tảng GroupHub.
-5. Sử dụng công cụ \`getSystemStats\` để lấy số liệu thực tế khi Admin hỏi về thống kê hệ thống hoặc thông báo mới nhất.`;
+5. Sử dụng công cụ (tools) một cách NGẦM ĐỊNH. TUYỆT ĐỐI KHÔNG BAO GIỜ được nhắc đến tên các công cụ (như getSystemStats, searchCommunitiesTool...) hay quy trình kỹ thuật trong câu trả lời với người dùng. Người dùng không cần biết bạn dùng tool gì, chỉ cần đưa cho họ kết quả.`;
     } else {
       enrichedSystemPrompt = `${config.systemPrompt}
 
